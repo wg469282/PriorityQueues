@@ -1,7 +1,7 @@
 import java.util.*;
 
-public class BSTPriorityQueue implements PriorityQueue {
-    private TreeNode root;
+public class BSTPriorityQueue<T extends Comparable<T> & HasValue> implements PriorityQueue<T> {
+    private TreeNode<T> root;
     private int size;
 
     public BSTPriorityQueue() {
@@ -12,28 +12,28 @@ public class BSTPriorityQueue implements PriorityQueue {
     // Asymptotyczna złożoność pesymistyczna: O(n), średnia: O(log n)
     // W najgorszym przypadku drzewo jest zdegenerowane do listy
     @Override
-    public Position insert(int value) {
-        if (value < 0 || value > N) {
-            throw new IllegalArgumentException("Value must be in range [0, " + N + "]");
+    public Position<T> insert(T element) {
+        if (element.wartość() < 0 || element.wartość() > N) {
+            throw new IllegalArgumentException("Element value must be in range [0, " + N + "]");
         }
 
-        TreeNodePosition position = new TreeNodePosition(value);
-        root = insertNode(root, value, position);
+        TreeNodePosition<T> position = new TreeNodePosition<>(element);
+        root = insertNode(root, element, position);
         size++;
         return position;
     }
 
-    private TreeNode insertNode(TreeNode node, int value, TreeNodePosition position) {
+    private TreeNode<T> insertNode(TreeNode<T> node, T element, TreeNodePosition<T> position) {
         if (node == null) {
-            TreeNode newNode = new TreeNode(value);
+            TreeNode<T> newNode = new TreeNode<>(element);
             position.node = newNode;
             return newNode;
         }
 
-        if (value <= node.value) {
-            node.left = insertNode(node.left, value, position);
+        if (element.compareTo(node.element) <= 0) {
+            node.left = insertNode(node.left, element, position);
         } else {
-            node.right = insertNode(node.right, value, position);
+            node.right = insertNode(node.right, element, position);
         }
         return node;
     }
@@ -41,14 +41,14 @@ public class BSTPriorityQueue implements PriorityQueue {
     // Asymptotyczna złożoność pesymistyczna: O(n), średnia: O(log n)
     // Musi znaleźć najmniejszy element (najlżejszy w lewo)
     @Override
-    public int findMin() {
+    public T findMin() {
         if (isEmpty()) {
             throw new NoSuchElementException("Queue is empty");
         }
-        return findMinNode(root).value;
+        return findMinNode(root).element;
     }
 
-    private TreeNode findMinNode(TreeNode node) {
+    private TreeNode<T> findMinNode(TreeNode<T> node) {
         while (node.left != null) {
             node = node.left;
         }
@@ -58,35 +58,36 @@ public class BSTPriorityQueue implements PriorityQueue {
     // Asymptotyczna złożoność pesymistyczna: O(n), średnia: O(log n)
     // Znajdź minimum i usuń go z drzewa
     @Override
-    public int extractMin() {
+    public T extractMin() {
         if (isEmpty()) {
             throw new NoSuchElementException("Queue is empty");
         }
 
-        TreeNode minNode = findMinNode(root);
-        int minValue = minNode.value;
-        root = deleteNode(root, minValue);
+        TreeNode<T> minNode = findMinNode(root);
+        T minElement = minNode.element;
+        root = deleteNode(root, minElement);
         size--;
-        return minValue;
+        return minElement;
     }
 
-    private TreeNode deleteNode(TreeNode node, int value) {
+    private TreeNode<T> deleteNode(TreeNode<T> node, T element) {
         if (node == null)
             return null;
 
-        if (value < node.value) {
-            node.left = deleteNode(node.left, value);
-        } else if (value > node.value) {
-            node.right = deleteNode(node.right, value);
+        int comparison = element.compareTo(node.element);
+        if (comparison < 0) {
+            node.left = deleteNode(node.left, element);
+        } else if (comparison > 0) {
+            node.right = deleteNode(node.right, element);
         } else {
             if (node.left == null)
                 return node.right;
             if (node.right == null)
                 return node.left;
 
-            TreeNode successor = findMinNode(node.right);
-            node.value = successor.value;
-            node.right = deleteNode(node.right, successor.value);
+            TreeNode<T> successor = findMinNode(node.right);
+            node.element = successor.element;
+            node.right = deleteNode(node.right, successor.element);
         }
         return node;
     }
@@ -94,31 +95,34 @@ public class BSTPriorityQueue implements PriorityQueue {
     // Asymptotyczna złożoność pesymistyczna: O(n), średnia: O(log n)
     // Usuwa stary węzeł i wstawia nowy z nową wartością
     @Override
-    public void decreaseKey(Position position, int newValue) {
+    public void decreaseKey(Position<T> position, T newElement) {
         if (!(position instanceof TreeNodePosition)) {
             throw new IllegalArgumentException("Invalid position type");
         }
 
-        TreeNodePosition treePos = (TreeNodePosition) position;
-        if (!treePos.isValid() || newValue < 0 || newValue > N) {
+        @SuppressWarnings("unchecked")
+        TreeNodePosition<T> treePos = (TreeNodePosition<T>) position;
+
+        if (!treePos.isValid() || newElement.wartość() < 0 || newElement.wartość() > N) {
             throw new IllegalArgumentException("Invalid operation");
         }
 
-        if (newValue >= treePos.getValue()) {
-            throw new IllegalArgumentException("New value must be smaller");
+        if (newElement.wartość() >= treePos.getElement().wartość()) {
+            throw new IllegalArgumentException("New element value must be smaller");
         }
 
-        root = deleteNode(root, treePos.getValue());
+        T oldElement = treePos.getElement();
+        root = deleteNode(root, oldElement);
         treePos.valid = false;
         size--;
-        insert(newValue);
+        insert(newElement);
     }
 
     // Asymptotyczna złożoność pesymistyczna: O(n²), średnia: O(n log n)
     // Dla każdego elementu wykonuje insert
-    public static PriorityQueue buildHeap(int[] elements) {
-        BSTPriorityQueue pq = new BSTPriorityQueue();
-        for (int element : elements) {
+    public static <T extends Comparable<T> & HasValue> PriorityQueue<T> buildHeap(T[] elements) {
+        BSTPriorityQueue<T> pq = new BSTPriorityQueue<>();
+        for (T element : elements) {
             pq.insert(element);
         }
         return pq;
@@ -127,14 +131,14 @@ public class BSTPriorityQueue implements PriorityQueue {
     // Asymptotyczna złożoność pesymistyczna: O(n*m*log(n+m)), średnia:
     // O(n*m*log(n+m))
     @Override
-    public PriorityQueue merge(PriorityQueue other) {
-        BSTPriorityQueue result = new BSTPriorityQueue();
+    public PriorityQueue<T> merge(PriorityQueue<T> other) {
+        BSTPriorityQueue<T> result = new BSTPriorityQueue<>();
 
         // Dodaj wszystkie elementy z tego drzewa
-        List<Integer> thisElements = new ArrayList<>();
+        List<T> thisElements = new ArrayList<>();
         inorderTraversal(root, thisElements);
-        for (int value : thisElements) {
-            result.insert(value);
+        for (T element : thisElements) {
+            result.insert(element);
         }
 
         // Dodaj wszystkie elementy z drugiego drzewa
@@ -145,10 +149,10 @@ public class BSTPriorityQueue implements PriorityQueue {
         return result;
     }
 
-    private void inorderTraversal(TreeNode node, List<Integer> result) {
+    private void inorderTraversal(TreeNode<T> node, List<T> result) {
         if (node != null) {
             inorderTraversal(node.left, result);
-            result.add(node.value);
+            result.add(node.element);
             inorderTraversal(node.right, result);
         }
     }
@@ -169,28 +173,28 @@ public class BSTPriorityQueue implements PriorityQueue {
         size = 0;
     }
 
-    private static class TreeNode {
-        int value;
-        TreeNode left, right;
+    private static class TreeNode<T> {
+        T element;
+        TreeNode<T> left, right;
 
-        TreeNode(int value) {
-            this.value = value;
+        TreeNode(T element) {
+            this.element = element;
         }
     }
 
-    private static class TreeNodePosition implements Position {
-        TreeNode node;
-        int value;
+    private static class TreeNodePosition<T> implements Position<T> {
+        TreeNode<T> node;
+        T element;
         boolean valid;
 
-        TreeNodePosition(int value) {
-            this.value = value;
+        TreeNodePosition(T element) {
+            this.element = element;
             this.valid = true;
         }
 
         @Override
-        public int getValue() {
-            return value;
+        public T getElement() {
+            return element;
         }
 
         @Override

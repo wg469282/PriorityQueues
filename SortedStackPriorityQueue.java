@@ -1,8 +1,8 @@
 import java.util.*;
 
-public class SortedStackPriorityQueue implements PriorityQueue {
-    private List<Integer> stack;
-    private List<StackPosition> positions;
+public class SortedStackPriorityQueue<T extends Comparable<T> & HasValue> implements PriorityQueue<T> {
+    private List<T> stack;
+    private List<StackPosition<T>> positions;
 
     public SortedStackPriorityQueue() {
         this.stack = new ArrayList<>();
@@ -12,22 +12,23 @@ public class SortedStackPriorityQueue implements PriorityQueue {
     // Asymptotyczna złożoność pesymistyczna: O(n), średnia: O(n)
     // Musi przeszukać całą listę aby znaleźć odpowiednie miejsce
     @Override
-    public Position insert(int value) {
-        if (value < 0 || value > N) {
-            throw new IllegalArgumentException("Value must be in range [0, " + N + "]");
+    public Position<T> insert(T element) {
+        if (element.wartość() < 0 || element.wartość() > N) {
+            throw new IllegalArgumentException("Element value must be in range [0, " + N + "]");
         }
 
         int insertIndex = 0;
-        while (insertIndex < stack.size() && stack.get(insertIndex) <= value) {
+        // Sortujemy według wartości z metody wartość()
+        while (insertIndex < stack.size() && stack.get(insertIndex).wartość() <= element.wartość()) {
             insertIndex++;
         }
 
-        stack.add(insertIndex, value);
-        StackPosition position = new StackPosition(insertIndex, value);
+        stack.add(insertIndex, element);
+        StackPosition<T> position = new StackPosition<>(insertIndex, element);
         positions.add(position);
 
         // Aktualizuj indeksy w istniejących pozycjach
-        for (StackPosition pos : positions) {
+        for (StackPosition<T> pos : positions) {
             if (pos.index >= insertIndex && pos != position) {
                 pos.index++;
             }
@@ -39,7 +40,7 @@ public class SortedStackPriorityQueue implements PriorityQueue {
     // Asymptotyczna złożoność pesymistyczna: O(1), średnia: O(1)
     // Pierwszy element jest zawsze najmniejszy
     @Override
-    public int findMin() {
+    public T findMin() {
         if (isEmpty()) {
             throw new NoSuchElementException("Queue is empty");
         }
@@ -49,15 +50,15 @@ public class SortedStackPriorityQueue implements PriorityQueue {
     // Asymptotyczna złożoność pesymistyczna: O(n), średnia: O(n)
     // Usunięcie wymaga przesunięcia wszystkich elementów
     @Override
-    public int extractMin() {
+    public T extractMin() {
         if (isEmpty()) {
             throw new NoSuchElementException("Queue is empty");
         }
 
-        int min = stack.remove(0);
+        T min = stack.remove(0);
 
         // Aktualizuj indeksy w pozycjach
-        for (StackPosition pos : positions) {
+        for (StackPosition<T> pos : positions) {
             if (pos.index > 0) {
                 pos.index--;
             } else if (pos.index == 0) {
@@ -71,31 +72,33 @@ public class SortedStackPriorityQueue implements PriorityQueue {
     // Asymptotyczna złożoność pesymistyczna: O(n), średnia: O(n)
     // Może wymagać przesunięcia elementu w posortowanej strukturze
     @Override
-    public void decreaseKey(Position position, int newValue) {
+    public void decreaseKey(Position<T> position, T newElement) {
         if (!(position instanceof StackPosition)) {
             throw new IllegalArgumentException("Invalid position type");
         }
 
-        StackPosition stackPos = (StackPosition) position;
-        if (!stackPos.isValid() || newValue < 0 || newValue > N) {
+        @SuppressWarnings("unchecked")
+        StackPosition<T> stackPos = (StackPosition<T>) position;
+
+        if (!stackPos.isValid() || newElement.wartość() < 0 || newElement.wartość() > N) {
             throw new IllegalArgumentException("Invalid operation");
         }
 
-        if (newValue >= stackPos.getValue()) {
-            throw new IllegalArgumentException("New value must be smaller");
+        if (newElement.wartość() >= stackPos.getElement().wartość()) {
+            throw new IllegalArgumentException("New element value must be smaller than current");
         }
 
         // Usuń stary element i wstaw nowy
         stack.remove(stackPos.index);
         stackPos.valid = false;
-        insert(newValue);
+        insert(newElement);
     }
 
     // Asymptotyczna złożoność pesymistyczna: O(n²), średnia: O(n²)
     // Dla każdego elementu wykonuje insert O(n)
-    public static PriorityQueue buildHeap(int[] elements) {
-        SortedStackPriorityQueue pq = new SortedStackPriorityQueue();
-        for (int element : elements) {
+    public static <T extends Comparable<T> & HasValue> PriorityQueue<T> buildHeap(T[] elements) {
+        SortedStackPriorityQueue<T> pq = new SortedStackPriorityQueue<>();
+        for (T element : elements) {
             pq.insert(element);
         }
         return pq;
@@ -104,12 +107,12 @@ public class SortedStackPriorityQueue implements PriorityQueue {
     // Asymptotyczna złożoność pesymistyczna: O(n*m), średnia: O(n*m)
     // gdzie n i m to rozmiary kolejek
     @Override
-    public PriorityQueue merge(PriorityQueue other) {
-        SortedStackPriorityQueue result = new SortedStackPriorityQueue();
+    public PriorityQueue<T> merge(PriorityQueue<T> other) {
+        SortedStackPriorityQueue<T> result = new SortedStackPriorityQueue<>();
 
         // Dodaj wszystkie elementy z tej kolejki
-        for (int value : this.stack) {
-            result.insert(value);
+        for (T element : this.stack) {
+            result.insert(element);
         }
 
         // Dodaj wszystkie elementy z drugiej kolejki
@@ -136,20 +139,20 @@ public class SortedStackPriorityQueue implements PriorityQueue {
         positions.clear();
     }
 
-    private static class StackPosition implements Position {
+    private static class StackPosition<T> implements Position<T> {
         int index;
-        int value;
+        T element;
         boolean valid;
 
-        StackPosition(int index, int value) {
+        StackPosition(int index, T element) {
             this.index = index;
-            this.value = value;
+            this.element = element;
             this.valid = true;
         }
 
         @Override
-        public int getValue() {
-            return value;
+        public T getElement() {
+            return element;
         }
 
         @Override
