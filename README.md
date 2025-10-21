@@ -16,7 +16,7 @@ This project demonstrates advanced understanding of **data structures**, **algor
 ### 🎯 Key Features
 
 - **🏗️ Three Priority Queue Implementations**:
-  - `SortedStackPriorityQueue` - Array-based sorted implementation
+  - `SortedStackPriorityQueue` - Array based sorted implementation
   - `BSTPriorityQueue` - Binary Search Tree implementation  
   - `BucketPriorityQueue` - Bucket-based implementation with O(1) operations
 
@@ -144,7 +144,7 @@ Testing: SortedStackPriorityQueue
 Testing: BSTPriorityQueue  
   Result: [7, 12, 23, 45, 89]
   Correctly sorted: ✓ YES
-  All elements preserved: ✓ YES
+  All elements preserved: ✓ YES 
   Time: 0.28ms
 
 Testing: BucketPriorityQueue
@@ -205,5 +205,5 @@ public interface PriorityQueue<T extends Comparable<T> & HasValue> {
 | **BSTPriorityQueue**   | O(log n) avg,<br>O(n) worst| O(log n)     | O(log n)  | O(log n)      | O(n)    | General purpose, balanced workloads         |
 | **BucketPriorityQueue**| O(1)                       | O(K)         | O(K)      | O(1)          | O(K+n)  | Limited range, high performance             |
 
-Where K is the range of possible values (0 to N=1000)
+Where K is the range of possible values (0 to N=1000) 
 
